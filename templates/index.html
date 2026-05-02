@@ -2,19 +2,17 @@
 {% block title %}PVC Calculator{% endblock %}
 
 {% block content %}
-<div class="alert alert-primary mt-2">
-  <h4 class="mb-1">New PVC Calculation</h4>
-  <div class="small">
-    Fill the commercial and date details below. Lower rate and tender fields are optional and appear only when relevant.
-  </div>
+<div class="d-flex justify-content-between align-items-center mb-3 mt-2 border-bottom pb-2">
+  <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-calculator"></i> New PVC Calculation</h4>
 </div>
+<p class="text-muted small">Fill the commercial and date details below. Lower rate and tender fields are optional and appear only when relevant.</p>
 
 <form method="post" action="{{ url_for('pvc.calculate') }}">
 
   <!-- Commercial details -->
   <div class="card mb-3 shadow-sm">
-    <div class="card-header bg-secondary text-white">
-      <h6 class="mb-0">Commercial Details</h6>
+    <div class="card-header bg-white py-3">
+      <h6 class="mb-0 text-primary fw-bold">Commercial Details</h6>
     </div>
     <div class="card-body">
       <div class="row g-3">
@@ -64,7 +62,7 @@
         <!-- Basic rate / qty / freight -->
         <div class="col-md-3">
           <label class="form-label fw-semibold">Basic Rate (per unit)</label>
-          <input class="form-control form-control-sm" type="number" step="any" name="basicrate" id="basicrate" value="7600000" required>
+          <input class="form-control form-control-sm" type="number" step="any" name="basicrate" id="basicrate" required>
         </div>
 
         <div class="col-md-3">
@@ -119,15 +117,15 @@
         <div class="row g-3">
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Basic Rate (per unit)</label>
-            <input class="form-control form-control-sm" type="number" step="any" name="lowerrate" id="lowerrate" value="8150000">
+            <input class="form-control form-control-sm" type="number" step="any" name="lowerrate" id="lowerrate">
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Freight (per unit)</label>
-            <input class="form-control form-control-sm" type="number" step="any" name="lowerfreight" id="lowerfreight" value="80000">
+            <input class="form-control form-control-sm" type="number" step="any" name="lowerfreight" id="lowerfreight">
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Base Date</label>
-            <input class="form-control form-control-sm" type="date" name="lowerbasicdate" id="lowerbasicdate" value="2024-05-01">
+            <input class="form-control form-control-sm" type="date" name="lowerbasicdate" id="lowerbasicdate">
           </div>
         </div>
       </div>
@@ -137,28 +135,28 @@
 
   <!-- Item-specific extra fields -->
   <div class="card mb-3 shadow-sm" id="itemextrasection" style="display:none;">
-    <div class="card-header bg-light">
-      <h6 class="mb-0">Item-Specific Inputs</h6>
+    <div class="card-header bg-white py-3">
+      <h6 class="mb-0 text-primary fw-bold">Item-Specific Inputs</h6>
     </div>
     <div class="card-body" id="itemextracontainer"></div>
   </div>
 
   <!-- Date details -->
   <div class="card mb-3 shadow-sm">
-    <div class="card-header bg-secondary text-white">
-      <h6 class="mb-0">Date Details</h6>
+    <div class="card-header bg-white py-3">
+      <h6 class="mb-0 text-primary fw-bold">Date Details</h6>
     </div>
     <div class="card-body">
       <div class="row g-3">
 
         <div class="col-md-4">
           <label class="form-label fw-semibold">PVC Base Date</label>
-          <input class="form-control form-control-sm" type="date" name="pvcbasedate" id="pvcbasedate" value="2023-11-01">
+          <input class="form-control form-control-sm" type="date" name="pvcbasedate" id="pvcbasedate">
         </div>
 
         <div class="col-md-4">
           <label class="form-label fw-semibold">Original DP</label>
-          <input class="form-control form-control-sm" type="date" name="origdp" value="2025-01-31">
+          <input class="form-control form-control-sm" type="date" name="origdp">
         </div>
 
         <div class="col-md-4 mb-3">
@@ -179,12 +177,12 @@
 
         <div class="col-md-4">
           <label class="form-label fw-semibold">Call / Inspection Date</label>
-          <input class="form-control form-control-sm" type="date" name="caldate" value="2025-01-15">
+          <input class="form-control form-control-sm" type="date" name="caldate">
         </div>
 
         <div class="col-md-4">
           <label class="form-label fw-semibold">Supply Date</label>
-          <input class="form-control form-control-sm" type="date" name="supdate" value="2025-01-20">
+          <input class="form-control form-control-sm" type="date" name="supdate">
         </div>
 
       </div>
@@ -391,7 +389,7 @@ function renderExtraFields() {
     const labelText = f.label || f.name || "Field";
     const name      = f.name  || "extrafield";
     const type      = f.type  || "text";
-    const stepAttr  = f.step     ? ` step="${f.step}"` : "";
+    const stepAttr  = f.step     ? ` step="${f.step}"` : (type === "number" ? ' step="any"' : "");
     const reqAttr   = f.required ? " required"         : "";
 
     if (type === "checkbox") {

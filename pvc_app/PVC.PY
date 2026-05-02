@@ -278,13 +278,13 @@ def igbt_vendor_scenario(rate, vendor, base_month, ref_month, idx_df, weights, s
         "vendor":       vendor.vendor_name,
         "pono":         vendor.po_no,
         "currency":     currency,
-        "rate":         safe_round(rate),
-        "cif":          safe_round(cif),
-        "baseduty":     safe_round(baseduty),
-        "indigenous":   safe_round(indigenous_portion),
-        "p1":           safe_round(p1),
-        "p2":           safe_round(p2),
-        "totalpvc":     safe_round(total_pvc),
+        "rate":         rate,
+        "cif":          cif,
+        "baseduty":     baseduty,
+        "indigenous":   indigenous_portion,
+        "p1":           p1,
+        "p2":           p2,
+        "totalpvc":     total_pvc,
         "basemonth":    base_month_str,
         "currentmonth": curr_month_str,
     }
@@ -350,6 +350,8 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     freight_per_unit  = safe_float(data.get("freightrateperunit")  or tender.freightrateperunit or 0)
     lower_freight     = safe_float(data.get("lowerfreight")        or tender.lowerfreight or 0)
     quantity          = safe_float(data.get("quantity")            or 1)
+    if quantity <= 0:
+        quantity = 1.0
 
     cal_date      = data.get("caldate")
     origdp        = data.get("origdp")
@@ -359,16 +361,17 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     rate_applied  = (data.get("rateapplied") or "").strip().lower()
     developmental = bool(data.get("developmentaltender"))
 
-    # "Scheduled DP" — extended supersedes refixed supersedes original
-    scheduleddp = extendeddp or refixeddp or origdp
+    # "Scheduled DP" — Extended is only for LD. PVC uses Refixed or Original.
+    pvc_scheduleddp = refixeddp or origdp
+    ld_scheduleddp  = extendeddp or refixeddp or origdp
 
-    schedts  = pd.to_datetime(scheduleddp,  errors="coerce")
+    schedts  = pd.to_datetime(ld_scheduleddp,  errors="coerce")
     supplyts = pd.to_datetime(supply_date,   errors="coerce")
 
     basemonth        = to_month_start(pvc_base_date)
     lowerbase_month  = to_month_start(lower_base) if lower_base else None
     calmonth         = to_month_start(cal_date)
-    schedmonth       = to_month_start(scheduleddp)
+    schedmonth       = to_month_start(pvc_scheduleddp)
 
     lowerrate_applicable = lower_rate > 0 and lowerbase_month is not None
 
@@ -390,6 +393,21 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
         ldapplicable = False
         ldratepct    = 0.0
         ldweeks      = 0
+
+    # ── D1 special-case check FIRST ────────
+    d1_special_case  = False
+    _d1_plain_igbt   = None
+    if lowerrate_applicable:
+        lower_base_ts = pd.to_datetime(lower_base, errors="coerce")
+        origdp_ts     = pd.to_datetime(origdp,     errors="coerce")
+        refix_ts      = pd.to_datetime(refixeddp,  errors="coerce")
+
+        # Prefer Refixed DP; fall back to Original DP
+        compare_date = refix_ts if pd.notna(refix_ts) else origdp_ts
+
+        if pd.notna(lower_base_ts) and pd.notna(compare_date) and lower_base_ts > compare_date:
+            d1_special_case = True
+            _d1_plain_igbt  = (lower_rate * quantity + lowerfreight_total) * GST_FACTOR
 
     # ── Run scenarios (returns min PVC per set across vendors) ───────────────
     all_vendor_summaries: list = []
@@ -420,25 +438,9 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     pvca2 = run_scenario("A2", basic_rate, basemonth,       calmonth)
     pvcb2 = run_scenario("B2", basic_rate, basemonth,       schedmonth)
     pvcc1 = run_scenario("C1", lower_rate, lowerbase_month, calmonth)   if lowerrate_applicable else None
-    pvcd1 = run_scenario("D1", lower_rate, lowerbase_month, schedmonth) if lowerrate_applicable else None
-
-    # ── D1 special-case: Lower Base Date falls after the reference DP ────────
-    # No PVC% is calculated for D1.  D1 amount = min(B2 amount, plain lower basic
-    # amount).  lowercontractual is resolved after pvccontractual is known below.
-    d1_special_case  = False
-    _d1_plain_igbt   = None
-    if lowerrate_applicable:
-        lower_base_ts = pd.to_datetime(lower_base, errors="coerce")
-        origdp_ts     = pd.to_datetime(origdp,     errors="coerce")
-        refix_ts      = pd.to_datetime(refixeddp,  errors="coerce")
-
-        # Prefer Refixed DP; fall back to Original DP
-        compare_date = refix_ts if pd.notna(refix_ts) else origdp_ts
-
-        if pd.notna(lower_base_ts) and pd.notna(compare_date) and lower_base_ts > compare_date:
-            d1_special_case = True
-            pvcd1           = None   # no vendor PVC calc for D1 in this branch
-            _d1_plain_igbt  = (lower_rate * quantity + lowerfreight_total) * GST_FACTOR
+    pvcd1 = None
+    if lowerrate_applicable and not d1_special_case:
+        pvcd1 = run_scenario("D1", lower_rate, lowerbase_month, schedmonth)
 
     # ── Amount calculation helper ────────────────────────────────────────────
     def with_freight_gst(base_rate, pvc_per_set, qty, frt):
@@ -450,18 +452,6 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     pvcactual      = with_freight_gst(basic_rate, pvca2, quantity, freight_total)
     pvccontractual = with_freight_gst(basic_rate, pvcb2, quantity, freight_total)
 
-    loweractual      = None
-    lowercontractual = None
-    if lowerrate_applicable:
-        loweractual = with_freight_gst(lower_rate, pvcc1, quantity, lowerfreight_total)
-
-        if d1_special_case:
-            # D1 special case: min(B2 amount, plain lower basic amount).
-            # pvcd1 was set to None above — no vendor scenario PVC is used.
-            lowercontractual = min(pvccontractual, _d1_plain_igbt) if pvccontractual is not None else _d1_plain_igbt
-        else:
-            lowercontractual = with_freight_gst(lower_rate, pvcd1, quantity, lowerfreight_total)
-
     # ── LD deductions ────────────────────────────────────────────────────────
     ldamtactual      = (max(pvcactual,      0) * (ldratepct / 100.0)) if (ldapplicable and pvcactual      is not None) else 0.0
     ldamtcontractual = (max(pvccontractual, 0) * (ldratepct / 100.0)) if (ldapplicable and pvccontractual is not None) else 0.0
@@ -469,8 +459,23 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     pvcactuallessld      = (pvcactual      - ldamtactual)      if pvcactual      is not None else None
     pvccontractuallessld = (pvccontractual - ldamtcontractual) if pvccontractual is not None else None
 
-    loweractuallessld      = (loweractual      - ldamtactual)      if loweractual      is not None else None
-    lowercontractuallessld = (lowercontractual - ldamtcontractual) if lowercontractual is not None else None
+    loweractual      = None
+    lowercontractual = None
+    if lowerrate_applicable:
+        loweractual = with_freight_gst(lower_rate, pvcc1, quantity, lowerfreight_total)
+
+        if d1_special_case:
+            # D1 special case uses B2 net (after LD)
+            b2_for_comparison = pvccontractuallessld if pvccontractuallessld is not None else pvccontractual
+            lowercontractual = min(b2_for_comparison, _d1_plain_igbt) if b2_for_comparison is not None else _d1_plain_igbt
+        else:
+            lowercontractual = with_freight_gst(lower_rate, pvcd1, quantity, lowerfreight_total)
+
+    loweractuallessld = (loweractual - ldamtactual) if loweractual is not None else None
+    if d1_special_case:
+        lowercontractuallessld = lowercontractual
+    else:
+        lowercontractuallessld = (lowercontractual - ldamtcontractual) if lowercontractual is not None else None
 
     # ── Scenario selection ───────────────────────────────────────────────────
     candidates = _build_candidates(
@@ -494,13 +499,13 @@ def calculate_igbt_propulsion(item, data, tender_id, idx_df, weights):
     scenariodetails: list = []
     ieema_scenarios = [
         ("A2", pvc_base_date, cal_date),
-        ("B2", pvc_base_date, scheduleddp),
+        ("B2", pvc_base_date, pvc_scheduleddp),
     ]
     if lowerrate_applicable:
         ieema_scenarios.append(("C1", lower_base, cal_date))
         # D1 special case: no PVC% computed, so no index detail row for D1.
         if not d1_special_case:
-            ieema_scenarios.append(("D1", lower_base, scheduleddp))
+            ieema_scenarios.append(("D1", lower_base, pvc_scheduleddp))
     for sc, bd, cd in ieema_scenarios:
         if bd and cd:
             det = pvc_percent_detailed(bd, cd, idx_df, sc, weights)
@@ -555,11 +560,15 @@ def calc_single_record(data, idx_df, weights):
     origdp          = data.get("origdp")
     refixeddp       = data.get("refixeddp")
     extendeddp      = data.get("extendeddp")
-    scheduled_date  = extendeddp or refixeddp or origdp
     supply_date     = data.get("supdate")
     lower_base_date = data.get("lowerbasicdate")
 
+    pvc_scheduled_date = refixeddp or origdp
+    ld_scheduled_date  = extendeddp or refixeddp or origdp
+
     qty               = safe_float(data.get("quantity"))
+    if qty <= 0:
+        qty = 1.0
     basic_rate        = safe_float(data.get("basicrate"))
     freight_per_unit  = safe_float(data.get("freightrateperunit"))
     lower_rate        = safe_float(data.get("lowerrate"))
@@ -573,7 +582,7 @@ def calc_single_record(data, idx_df, weights):
 
     # ── Scenario percentages ────────────────────────────────────────────────
     pct_a2 = pvc_percent(pvc_base_date,   cal_date,       idx_df, weights)
-    pct_b2 = pvc_percent(pvc_base_date,   scheduled_date, idx_df, weights)
+    pct_b2 = pvc_percent(pvc_base_date,   pvc_scheduled_date, idx_df, weights)
     pct_c1 = pvc_percent(lower_base_date, cal_date,       idx_df, weights) if lowerrate_applicable else None
 
     pct_d1           = None
@@ -604,10 +613,10 @@ def calc_single_record(data, idx_df, weights):
 
         else:
             # ── Normal case: D1 = lower_rate PVC from Lower Base Date → Scheduled Date
-            pct_d1 = pvc_percent(lower_base_date, scheduled_date, idx_df, weights)
+            pct_d1 = pvc_percent(lower_base_date, pvc_scheduled_date, idx_df, weights)
             lowercontractual = (lower_rate * qty * (1 + (pct_d1 or 0) / 100.0) + lowerfreight_total) * GST_FACTOR
 
-    # ── Gross amounts ────────────────────────────────────────────────────────
+    # ── Gross amounts & LD ───────────────────────────────────────────────────
     pvcactual = (
         basic_rate * qty * (1 + pct_a2 / 100.0) + freight_total
     ) * GST_FACTOR
@@ -616,24 +625,11 @@ def calc_single_record(data, idx_df, weights):
         basic_rate * qty * (1 + pct_b2 / 100.0) + freight_total
     ) * GST_FACTOR
 
-    loweractual = None
-    if lowerrate_applicable:
-        loweractual = (
-            lower_rate * qty * (1 + (pct_c1 or 0) / 100.0) + lowerfreight_total
-        ) * GST_FACTOR
-
-        if d1_special_case:
-            # D1 special case: min(B2 amount, plain lower basic amount).
-            # No PVC% was calculated for D1 — pvcpersetd1 will be None.
-            lowercontractual = min(pvccontractual, _d1_plain_amount)
-        # else: lowercontractual already set in the normal-case branch above
-
-    # ── LD ──────────────────────────────────────────────────────────────────
     delaydays    = 0
     ldweeks      = 0
     ldratepct    = 0.0
     ldapplicable = False
-    duets    = pd.to_datetime(scheduled_date, errors="coerce")
+    duets    = pd.to_datetime(ld_scheduled_date, errors="coerce")
     supplyts = pd.to_datetime(supply_date,    errors="coerce")
     if pd.notna(duets) and pd.notna(supplyts) and supplyts > duets:
         delaydays    = int((supplyts - duets).days)
@@ -652,8 +648,21 @@ def calc_single_record(data, idx_df, weights):
     pvcactuallessld      = pvcactual      - ldamtactual
     pvccontractuallessld = pvccontractual - ldamtcontractual
 
-    loweractuallessld      = (loweractual      - ldamtactual)      if loweractual      is not None else None
-    lowercontractuallessld = (lowercontractual - ldamtcontractual) if lowercontractual is not None else None
+    loweractual = None
+    if lowerrate_applicable:
+        loweractual = (
+            lower_rate * qty * (1 + (pct_c1 or 0) / 100.0) + lowerfreight_total
+        ) * GST_FACTOR
+
+        if d1_special_case:
+            # D1 special case uses B2 net (after LD)
+            lowercontractual = min(pvccontractuallessld, _d1_plain_amount)
+
+    loweractuallessld = (loweractual - ldamtactual) if loweractual is not None else None
+    if d1_special_case:
+        lowercontractuallessld = lowercontractual
+    else:
+        lowercontractuallessld = (lowercontractual - ldamtcontractual) if lowercontractual is not None else None
 
     # ── Scenario selection ───────────────────────────────────────────────────
     candidates = _build_candidates(
@@ -682,12 +691,12 @@ def calc_single_record(data, idx_df, weights):
     scenariodetails: list = []
     _sc_list = [
         ("A2", pvc_base_date,   cal_date),
-        ("B2", pvc_base_date,   scheduled_date),
+        ("B2", pvc_base_date,   pvc_scheduled_date),
         ("C1", lower_base_date, cal_date),
     ]
     # D1 special case: no PVC% was computed, so no index detail row for D1.
     if lowerrate_applicable and not d1_special_case:
-        _sc_list.append(("D1", lower_base_date, scheduled_date))
+        _sc_list.append(("D1", lower_base_date, pvc_scheduled_date))
     for sc, bd, cd in _sc_list:
         if bd and cd:
             det = pvc_percent_detailed(bd, cd, idx_df, sc, weights)

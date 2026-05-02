@@ -46,6 +46,10 @@ def register():
             username=username,
             email=email or None,
             password_hash=generate_password_hash(password),
+            fullname=request.form.get("fullname", "").strip() or None,
+            contactno=request.form.get("contactno", "").strip() or None,
+            designation=request.form.get("designation", "").strip() or None,
+            controlno=request.form.get("controlno", "").strip() or None,
         )
         db.session.add(user)
         db.session.commit()

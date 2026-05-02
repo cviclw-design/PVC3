@@ -239,9 +239,9 @@ def tenders_new():
             item_id=int(itemid),
             tender_no=tenderno,
             basicrate=_safe_float(request.form.get("basicrate")),
-            pvcbasedate=request.form.get("pvcbasedate") or "",
+            pvcbasedate=request.form.get("pvcbasedate") or None,
             lowerrate=_safe_float(request.form.get("lowerrate")),
-            lowerratebasedate=request.form.get("lowerratebasedate") or "",
+            lowerratebasedate=request.form.get("lowerratebasedate") or None,
             freightrateperunit=_safe_float(request.form.get("freightrateperunit")),
             lowerfreight=_safe_float(request.form.get("lowerfreight")),
         )
@@ -269,9 +269,9 @@ def tenders_edit(tenderid):
         tender.item_id = int(itemid)
         tender.tender_no = tenderno
         tender.basicrate = _safe_float(request.form.get("basicrate"))
-        tender.pvcbasedate = request.form.get("pvcbasedate") or ""
+        tender.pvcbasedate = request.form.get("pvcbasedate") or None
         tender.lowerrate = _safe_float(request.form.get("lowerrate"))
-        tender.lowerratebasedate = request.form.get("lowerratebasedate") or ""
+        tender.lowerratebasedate = request.form.get("lowerratebasedate") or None
         tender.freightrateperunit = _safe_float(request.form.get("freightrateperunit"))
         tender.lowerfreight = _safe_float(request.form.get("lowerfreight"))
         db.session.commit()
@@ -329,9 +329,14 @@ def tender_vendors_new(tenderid):
 @admin_required
 def items_delete(itemid):
     it = Item.query.get_or_404(itemid)
-    db.session.delete(it)
-    db.session.commit()
-    flash('Item deleted.', 'success')
+    try:
+        ItemIndex.query.filter_by(item_id=it.id).delete()
+        db.session.delete(it)
+        db.session.commit()
+        flash('Item and associated indices deleted.', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('Cannot delete item. It is currently referenced by calculation history or existing tenders.', 'danger')
     return redirect(url_for('admin.items_list'))
 
 
@@ -353,11 +358,14 @@ def item_indices_delete(itemid, rowid):
 @admin_required
 def tenders_delete(tenderid):
     tender = TenderMaster.query.get_or_404(tenderid)
-    # Also delete all associated vendors
-    TenderVendor.query.filter_by(tender_id=tender.id).delete()
-    db.session.delete(tender)
-    db.session.commit()
-    flash('Tender and its vendors deleted.', 'success')
+    try:
+        TenderVendor.query.filter_by(tender_id=tender.id).delete()
+        db.session.delete(tender)
+        db.session.commit()
+        flash('Tender and its vendors deleted.', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('Cannot delete tender. It is referenced by calculation history.', 'danger')
     return redirect(url_for('admin.tenders_list'))
 
 

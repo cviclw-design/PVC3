@@ -15,6 +15,8 @@
     {% set showsc = ["A2", "B2", "C1", "D1"] %}
   {% endif %}
 
+  {% set is_further_ext = (ratemode_str == "lower rate with ld in further extension") %}
+
   {# ══ D1 special-case flag:
        pvcpersetd1 is None when lower_base_date > origdp/refixeddp.
        D1 = min(B2 net after LD, plain lower basic) — no PVC% was computed.
@@ -34,9 +36,9 @@
   {% set _b2_net   = _b2_gross - (_ld_b2 if _ldapply else 0) %}
 
   <!-- ─── HEADER ──────────────────────────────── -->
-  <div class="alert alert-success mb-3">
+  <div class="alert alert-light border shadow-sm mb-4">
     <h4 class="mb-1">
-      <i class="bi bi-calculator-fill me-2"></i> PVC Calculation Result
+      <i class="bi bi-calculator-fill me-2 text-primary"></i> PVC Calculation Result
     </h4>
     <p class="mb-0">
       <strong>User:</strong> {{ current_user.username }}
@@ -59,52 +61,50 @@
   <!-- ─── TOP SUMMARY CARDS ───────────────────── -->
   <div class="row text-center mb-4">
     <div class="col-md-3 mb-2">
-      <div class="card bg-success text-white h-100">
+      <div class="card border-0 shadow-sm border-start border-success border-4 h-100">
         <div class="card-body py-3">
-          <h4 class="mb-1">₹{{ "%.2f"|format(result.data.fairprice | float(0)) }}</h4>
-          <small><strong>Final Payable Fair Price</strong></small>
+          <div class="text-xs fw-bold text-success text-uppercase mb-1" style="font-size: 0.75rem;">Final Payable Fair Price</div>
+          <div class="h4 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.fairprice | float(0)) }}</div>
         </div>
       </div>
     </div>
     <div class="col-md-3 mb-2">
-      <div class="card bg-primary text-white h-100">
+      <div class="card border-0 shadow-sm border-start border-primary border-4 h-100">
         <div class="card-body py-3">
           {% set sc = result.data.selectedscenario %}
+          <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.75rem;">
           {% if sc == "A2" %}
-            <h5 class="mb-1">₹{{ "%.2f"|format(result.data.pvcactual | float(0)) }}</h5>
-            <small>Actual PVC (A2)</small>
+            Actual PVC (A2)</div><div class="h5 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.pvcactual | float(0)) }}
           {% elif sc == "B2" %}
-            <h5 class="mb-1">₹{{ "%.2f"|format(result.data.pvccontractual | float(0)) }}</h5>
-            <small>Contractual PVC (B2)</small>
+            Contractual PVC (B2)</div><div class="h5 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.pvccontractual | float(0)) }}
           {% elif sc == "C1" %}
-            <h5 class="mb-1">₹{{ "%.2f"|format(result.data.loweractual | float(0)) }}</h5>
-            <small>Lower Actual PVC (C1)</small>
+            Lower Actual PVC (C1)</div><div class="h5 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.loweractual | float(0)) }}
           {% elif sc == "D1" %}
-            <h5 class="mb-1">₹{{ "%.2f"|format(result.data.lowercontractual | float(0)) }}</h5>
-            <small>Lower Contractual{% if d1_special %} (Special){% endif %} (D1)</small>
+            Lower Contractual{% if d1_special %} (Special){% endif %} (D1)</div><div class="h5 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.lowercontractual | float(0)) }}
           {% else %}
-            <h5 class="mb-1">—</h5><small>PVC Amount</small>
+            PVC Amount</div><div class="h5 mb-0 fw-bold text-dark">—
           {% endif %}
+          </div>
         </div>
       </div>
     </div>
     <div class="col-md-3 mb-2">
-      <div class="card bg-danger text-white h-100">
+      <div class="card border-0 shadow-sm border-start border-danger border-4 h-100">
         <div class="card-body py-3">
+          <div class="text-xs fw-bold text-danger text-uppercase mb-1" style="font-size: 0.75rem;">LD Amount (on A2)</div>
           {% if _ldapply %}
-            <h5 class="mb-1">₹{{ "%.2f"|format(result.data.ldamtactual | float(0)) }}</h5>
+            <div class="h5 mb-0 fw-bold text-dark">₹{{ "%.2f"|format(result.data.ldamtactual | float(0)) }}</div>
           {% else %}
-            <h5 class="mb-1">Nil</h5>
+            <div class="h5 mb-0 fw-bold text-dark">Nil</div>
           {% endif %}
-          <small>LD Amount (on A2)</small>
         </div>
       </div>
     </div>
     <div class="col-md-3 mb-2">
-      <div class="card bg-info text-white h-100">
+      <div class="card border-0 shadow-sm border-start border-info border-4 h-100">
         <div class="card-body py-3">
-          <h3 class="mb-1">{{ result.data.selectedscenario | default("—") }}</h3>
-          <small>Selected Scenario</small>
+          <div class="text-xs fw-bold text-info text-uppercase mb-1" style="font-size: 0.75rem;">Selected Scenario</div>
+          <div class="h4 mb-0 fw-bold text-dark">{{ result.data.selectedscenario | default("—") }}</div>
         </div>
       </div>
     </div>
@@ -131,8 +131,8 @@
 
   <!-- ─── INPUTS & DATES ──────────────────────── -->
   <div class="card mb-4">
-    <div class="card-header bg-secondary text-white">
-      <h6 class="mb-0"><i class="bi bi-input-cursor-text me-1"></i> Inputs &amp; Dates</h6>
+    <div class="card-header py-3 bg-white">
+      <h6 class="mb-0 text-secondary fw-bold"><i class="bi bi-input-cursor-text me-1"></i> Inputs &amp; Dates</h6>
     </div>
     <div class="card-body">
       <div class="row">
@@ -171,8 +171,8 @@
   {% set lowermodes = ["lower rate applicable","lower rate and ld comparison","lower rate with ld in further extension"] %}
   {% if ratemode_str in lowermodes %}
   <div class="card mb-4">
-    <div class="card-header bg-warning">
-      <h6 class="mb-0"><i class="bi bi-percent me-1"></i> Lower Rate Details</h6>
+    <div class="card-header py-3 bg-white">
+      <h6 class="mb-0 text-warning text-dark fw-bold"><i class="bi bi-percent me-1"></i> Lower Rate Details</h6>
     </div>
     <div class="card-body">
       <div class="row">
@@ -200,8 +200,8 @@
   <!-- ─── LD DETAILS ──────────────────────────── -->
   {% if _ldapply %}
   <div class="card mb-4">
-    <div class="card-header bg-danger text-white">
-      <h6 class="mb-0"><i class="bi bi-clock-history me-1"></i> Liquidated Damages (LD) Details</h6>
+    <div class="card-header py-3 bg-white">
+      <h6 class="mb-0 text-danger fw-bold"><i class="bi bi-clock-history me-1"></i> Liquidated Damages (LD) Details</h6>
     </div>
     <div class="card-body">
       <div class="table-responsive">
@@ -231,8 +231,8 @@
   <!-- ─── SCENARIO COMPARISON (IEEMA only) ────── -->
   {% if result.scenarioamounts and not result.igbtvendordetails %}
   <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-      <h6 class="mb-0"><i class="bi bi-table me-1"></i> Scenario-wise PVC Comparison</h6>
+    <div class="card-header py-3 bg-white">
+      <h6 class="mb-0 text-primary fw-bold"><i class="bi bi-table me-1"></i> Scenario-wise PVC Comparison</h6>
     </div>
     <div class="card-body table-responsive">
       <table class="table table-bordered table-sm text-center align-middle">
@@ -243,11 +243,16 @@
           </tr>
         </thead>
         <tbody>
+        {% set c1_ld  = result.data.ldamtactual if is_further_ext else 0 %}
+        {% set c1_net = result.data.loweractuallessld if is_further_ext else result.data.loweractual %}
+        {% set d1_ld  = 0 if (not is_further_ext or d1_special) else result.data.ldamtcontractual %}
+        {% set d1_net = result.data.lowercontractuallessld if is_further_ext else result.data.lowercontractual %}
+
           {% set sc_meta = [
             ("A2","Actual PVC","Base Rate, Call Date",result.data.pvcactual,result.data.ldamtactual,result.data.pvcactuallessldnew,result.data.pvcperseta2),
             ("B2","Contractual PVC","Base Rate, Scheduled DP",result.data.pvccontractual,result.data.ldamtcontractual,result.data.pvccontractuallessldnew,result.data.pvcpersetb2),
-            ("C1","Lower Rate Actual PVC","Lower Rate, Call Date",result.data.loweractual,0,result.data.loweractual,result.data.pvcpersetc1),
-            ("D1","Lower Rate Contractual PVC","Lower Rate, Scheduled DP",result.data.lowercontractual,0,result.data.lowercontractual,result.data.pvcpersetd1),
+          ("C1","Lower Rate Actual PVC","Lower Rate, Call Date",result.data.loweractual, c1_ld, c1_net, result.data.pvcpersetc1),
+          ("D1","Lower Rate Contractual PVC","Lower Rate, Scheduled DP",result.data.lowercontractual, d1_ld, d1_net, result.data.pvcpersetd1),
           ] %}
           {% for sc_id,sc_desc,sc_sub,gross,ld_amt,net,perset in sc_meta %}
             {% if sc_id in showsc and (sc_id in ["A2","B2"] or sc_id in result.scenarioamounts) %}
@@ -264,7 +269,7 @@
               </td>
               <td>₹{{ "%.2f"|format(gross | float(0)) }}</td>
               <td class="text-danger">
-                {% if _ldapply and sc_id in ["A2","B2"] and ld_amt %}₹{{ "%.2f"|format(ld_amt | float(0)) }}{% else %}—{% endif %}
+              {% if _ldapply and ld_amt %}₹{{ "%.2f"|format(ld_amt | float(0)) }}{% else %}—{% endif %}
               </td>
               <td>₹{{ "%.2f"|format(net | float(0)) }}</td>
               <td>
@@ -295,8 +300,8 @@
   <!-- ─── INDEX-WISE PVC (IEEMA) ──────────────── -->
   {% if result.scenariodetails and not result.igbtvendordetails %}
   <div class="card mb-4">
-    <div class="card-header bg-success text-white">
-      <h6 class="mb-0"><i class="bi bi-bar-chart-line me-1"></i> Index-wise PVC Details</h6>
+    <div class="card-header py-3 bg-white">
+      <h6 class="mb-0 text-success fw-bold"><i class="bi bi-bar-chart-line me-1"></i> Index-wise PVC Details</h6>
     </div>
     <div class="card-body">
       <ul class="nav nav-tabs mb-3" id="idxTabs" role="tablist">
@@ -403,10 +408,10 @@
   {% if result.igbtvendordetails %}
   {% set igbt_sc_order = ["A2", "B2", "C1", "D1"] %}
   {% set igbt_avail_sc = result.igbtvendordetails | map(attribute="scenario") | unique | list %}
-  <div class="card shadow mb-4 border-0">
-    <div class="card-header bg-dark text-white py-3">
+  <div class="card shadow-sm mb-4 border-0">
+    <div class="card-header bg-white py-3">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0"><i class="bi bi-diagram-3-fill me-2"></i> IGBT Propulsion — Vendor-wise PVC Breakdown</h5>
+        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-diagram-3-fill me-2 text-secondary"></i> IGBT Propulsion — Vendor-wise PVC Breakdown</h5>
         <span class="badge bg-success fs-6">
           Selected: {{ result.data.selectedscenario | default("") }}
           &nbsp;| Fair Price: ₹{{ "%.2f"|format(result.data.fairprice | float(0)) }}
@@ -726,8 +731,14 @@
           {% else %}
             {% set _g = (_lr  * _qty + _vtpvc * _qty + _lfrt) * _GST %}
           {% endif %}
-          {% set _ld_p = _ld_a2 if (sc=="A2" and _ldapply) else
-                         _ld_b2 if (sc=="B2" and _ldapply) else 0 %}
+          {% set _ld_p = 0 %}
+          {% if _ldapply %}
+            {% if sc == "A2" %}{% set _ld_p = _ld_a2 %}
+            {% elif sc == "B2" %}{% set _ld_p = _ld_b2 %}
+            {% elif sc == "C1" and is_further_ext %}{% set _ld_p = _ld_a2 %}
+            {% elif sc == "D1" and is_further_ext and not d1_special %}{% set _ld_p = _ld_b2 %}
+            {% endif %}
+          {% endif %}
           {% set _net_p = _g - _ld_p %}
           {% if sc == "A2" %}
             {% if ns_min.a2_net is none or _net_p < ns_min.a2_net %}
@@ -831,7 +842,7 @@
         &nbsp;
         LD on B2: <strong style="color:#c0392b;">₹ {{ "{:,.2f}".format(_ld_b2) }}</strong>
         <br>
-        <span style="font-size:8pt;color:#666;">LD deducted from Scenarios A2 &amp; B2 only. C1 &amp; D1 compared without additional LD deduction.
+        <span style="font-size:8pt;color:#666;">{% if is_further_ext %}LD deducted from all applicable scenarios.{% else %}LD deducted from Scenarios A2 &amp; B2 only. C1 &amp; D1 compared without additional LD deduction.{% endif %}
         {% if d1_special %}D1 special case: B2 net (after LD) used as left side of min() comparison.{% endif %}</span>
       </div>
       {% else %}
@@ -874,12 +885,12 @@
                   <br>
                   <span style="font-size:7pt;font-weight:normal;opacity:0.85;">
                     {% if sc in ["A2","B2"] %}
-                      Rate ₹{{ "{:,.0f}".format(_br) }} · Frt ₹{{ "{:,.0f}".format(_frt) }}
-                      {% if _ldapply and sc in ["A2","B2"] %} · LD {{ "%.1f"|format(_ldpct) }}%{% endif %}
+                      Rate ₹{{ "{:,.2f}".format(_br) }} · Frt ₹{{ "{:,.2f}".format(_frt) }}
+                      {% if _ldapply %} · LD {{ "%.1f"|format(_ldpct) }}%{% endif %}
                     {% elif sc == "D1" and d1_special %}
                       {% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %} · No PVC%
                     {% else %}
-                      Rate ₹{{ "{:,.0f}".format(_lr) }} · Frt ₹{{ "{:,.0f}".format(_lfrt) }} · No LD
+                      Rate ₹{{ "{:,.2f}".format(_lr) }} · Frt ₹{{ "{:,.2f}".format(_lfrt) }} {% if _ldapply and is_further_ext %}· LD {{ "%.1f"|format(_ldpct) }}%{% else %}· No LD{% endif %}
                     {% endif %}
                   </span>
                 </th>
@@ -900,8 +911,10 @@
                     </span>
                   {% else %}
                     Fair Price (₹) after LD
-                    {% if _ldapply and sc in ["A2","B2"] %}
-                      <br><span style="color:#f8a5a5;">− ₹{{ "{:,.0f}".format(_ld_a2 if sc=="A2" else _ld_b2) }} LD</span>
+                    {% if _ldapply and sc == "A2" %}<br><span style="color:#f8a5a5;">− ₹{{ "{:,.0f}".format(_ld_a2) }} LD</span>
+                    {% elif _ldapply and sc == "B2" %}<br><span style="color:#f8a5a5;">− ₹{{ "{:,.0f}".format(_ld_b2) }} LD</span>
+                    {% elif _ldapply and sc == "C1" and is_further_ext %}<br><span style="color:#f8a5a5;">− ₹{{ "{:,.0f}".format(_ld_a2) }} LD</span>
+                    {% elif _ldapply and sc == "D1" and is_further_ext and not d1_special %}<br><span style="color:#f8a5a5;">− ₹{{ "{:,.0f}".format(_ld_b2) }} LD</span>
                     {% else %}<br><span style="color:#aed6a0;">No LD</span>{% endif %}
                   {% endif %}
                 </th>
@@ -958,10 +971,16 @@
                     {% set raw  = vrow.totalpvc | float(0) %}
                     {% if sc in ["A2","B2"] %}
                       {% set gross_cell = (_br * _qty + raw * _qty + _frt) * _GST %}
-                      {% set ld_cell    = _ld_a2 if (sc=="A2" and _ldapply) else _ld_b2 if (sc=="B2" and _ldapply) else 0 %}
                     {% else %}
                       {% set gross_cell = (_lr * _qty + raw * _qty + _lfrt) * _GST %}
-                      {% set ld_cell    = 0 %}
+                    {% endif %}
+                    {% set ld_cell = 0 %}
+                    {% if _ldapply %}
+                      {% if sc == "A2" %}{% set ld_cell = _ld_a2 %}
+                      {% elif sc == "B2" %}{% set ld_cell = _ld_b2 %}
+                      {% elif sc == "C1" and is_further_ext %}{% set ld_cell = _ld_a2 %}
+                      {% elif sc == "D1" and is_further_ext and not d1_special %}{% set ld_cell = _ld_b2 %}
+                      {% endif %}
                     {% endif %}
                     {% set net_cell = gross_cell - ld_cell %}
                     {% set sc_mn = ns_min.a2_net if sc=="A2" else ns_min.b2_net if sc=="B2" else ns_min.c1_net if sc=="C1" else ns_min.d1_net %}
@@ -975,7 +994,7 @@
                         color:{% if is_winner %}#000{% elif is_sc_min %}#155724{% else %}#1a3a6a{% endif %};">
                         ₹{{ "{:,.2f}".format(net_cell) }}{% if is_winner %}&nbsp;✓{% elif is_sc_min %}&nbsp;★{% endif %}
                       </div>
-                      {% if _ldapply and sc in ["A2","B2"] and ld_cell > 0 %}
+                      {% if _ldapply and ld_cell > 0 %}
                       <div style="font-size:7pt;color:#c0392b;margin-top:2px;">
                         Gross: ₹{{ "{:,.2f}".format(gross_cell) }}<br>
                         − LD: ₹{{ "{:,.2f}".format(ld_cell) }}
@@ -1069,13 +1088,13 @@
 
       <div style="margin-top:5px;font-size:7.5pt;color:#444;border:1px solid #ccc;padding:4px 8px;background:#fffbe6;line-height:1.9;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
         <strong>Formula:</strong>
-        A2/B2: (₹{{ "{:,.0f}".format(_br) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.0f}".format(_frt) }} frt) × 1.18{% if _ldapply %} − LD{% endif %} &nbsp;|&nbsp;
-        C1: (₹{{ "{:,.0f}".format(_lr) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.0f}".format(_lfrt) }} frt) × 1.18 (no LD) &nbsp;|&nbsp;
-        D1{% if d1_special %} (Special){% endif %}: {% if d1_special %}{% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %}{% else %}(₹{{ "{:,.0f}".format(_lr) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.0f}".format(_lfrt) }} frt) × 1.18{% endif %}
+        A2/B2: (₹{{ "{:,.2f}".format(_br) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.2f}".format(_frt) }} frt) × 1.18{% if _ldapply %} − LD{% endif %} &nbsp;|&nbsp;
+        C1: (₹{{ "{:,.2f}".format(_lr) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.2f}".format(_lfrt) }} frt) × 1.18 (no LD) &nbsp;|&nbsp;
+        D1{% if d1_special %} (Special){% endif %}: {% if d1_special %}{% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %}{% else %}(₹{{ "{:,.2f}".format(_lr) }} × {{ _qty|int }} + PVC×{{ _qty|int }} + ₹{{ "{:,.2f}".format(_lfrt) }} frt) × 1.18{% endif %}
         <br>
         <span style="background:#ffc107;padding:1px 5px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Gold ✓</span> = Selected Fair Price &nbsp;|&nbsp;
         <span style="background:#d4edda;padding:1px 5px;border-radius:2px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Green ★</span> = Per-scenario minimum vendor &nbsp;|&nbsp;
-        LD deducted from A2 &amp; B2 only; C1 compared without LD{% if d1_special %}; D1 special: LD already reflected in B2 net side of comparison{% endif %}.
+        {% if is_further_ext %}LD deducted from all applicable scenarios.{% else %}LD deducted from A2 &amp; B2 only; C1 compared without LD{% endif %}{% if d1_special %}; D1 special: LD already reflected in B2 net side of comparison{% endif %}.
       </div>
 
       <div class="pr-footer">
@@ -1434,7 +1453,7 @@
     <div class="pr-sec">INDEX-WISE PVC DETAILS (GENERATED SCENARIOS ONLY)</div>
     {% for detail in result.scenariodetails %}
       {% if detail.scenario in showsc_print %}
-      <table class="pr-idx" style="margin-bottom:8px;">
+      <table class="pr-idx" style="margin-bottom:4px;">
         <thead>
           <tr>
             <th colspan="5" style="text-align:left;background:#444;color:#fff;padding:3px 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
@@ -1464,6 +1483,18 @@
           </tr>
         </tbody>
       </table>
+      {% set _sc_rate = data.basicrate|float(0) if detail.scenario in ["A2","B2"] else data.lowerrate|float(0) %}
+      {% set _sc_frt = data.freightrateperunit|float(0) if detail.scenario in ["A2","B2"] else data.lowerfreight|float(0) %}
+      {% set _sc_qty = data.quantity|float(1) %}
+      {% set _qty_disp = _sc_qty|int if _sc_qty == _sc_qty|int else _sc_qty %}
+      {% set _sc_gross = result.data.pvcactual if detail.scenario == "A2" else (result.data.pvccontractual if detail.scenario == "B2" else (result.data.loweractual if detail.scenario == "C1" else result.data.lowercontractual)) %}
+      <div class="pr-formula-box" style="margin-top:4px; margin-bottom:12px; padding:6px 10px; font-size:9.5pt;">
+        <div class="pr-formula-line" style="color:#555;"><b>Gross PVC Amount = [ Rate × Qty × (1 + Total PVC% / 100) + (Freight/Unit × Qty) ] × 1.18</b></div>
+        <div class="pr-calc-line">
+          Gross PVC Amount = [ {{ "{:,.2f}".format(_sc_rate) }} × {{ _qty_disp }} × (1 + {{ "%.4f"|format(detail.pvcpercent | float(0)) }} / 100) + ({{ "{:,.2f}".format(_sc_frt) }} × {{ _qty_disp }}) ] × 1.18
+          = <b>₹ {{ "{:,.2f}".format(_sc_gross | float(0)) }}</b>
+        </div>
+      </div>
       {% endif %}
     {% endfor %}
 
@@ -1503,8 +1534,10 @@
 
     {% set _na2 = (result.data.pvcactuallessldnew      | float(0)) if result.data.pvcactuallessldnew      is not none else (result.data.pvcactual      | float(0)) %}
     {% set _nb2 = (result.data.pvccontractuallessldnew | float(0)) if result.data.pvccontractuallessldnew is not none else (result.data.pvccontractual | float(0)) %}
-    {% set _nc1 = (result.data.loweractuallessld       | float(0)) if result.data.loweractuallessld       is not none else (result.data.loweractual    | float(0)) %}
-    {% set _nd1 = (result.data.lowercontractuallessld  | float(0)) if result.data.lowercontractuallessld  is not none else (result.data.lowercontractual| float(0)) %}
+    {% set _nc1 = (result.data.loweractuallessld | float(0)) if is_further_ext and result.data.loweractuallessld is not none else (result.data.loweractual | float(0)) %}
+    {% set _nd1 = (result.data.lowercontractuallessld | float(0)) if is_further_ext and result.data.lowercontractuallessld is not none else (result.data.lowercontractual | float(0)) %}
+    {% set c1_ld_pr = result.data.ldamtactual if is_further_ext else 0 %}
+    {% set d1_ld_pr = 0 if (not is_further_ext or d1_special) else result.data.ldamtcontractual %}
 
     {% set ns_ieema = namespace(minnet=None, minsc=None) %}
     {% if "A2" in showsc_print %}{% if ns_ieema.minnet is none or _na2 < ns_ieema.minnet %}{% set ns_ieema.minnet = _na2 %}{% set ns_ieema.minsc = "A2" %}{% endif %}{% endif %}
@@ -1526,8 +1559,8 @@
         {% set pr_rows = [
           ("A2","Base Rate, Actual Date",       result.data.pvcactual,       result.data.ldamtactual,      _na2, result.data.selectedscenario=="A2", ns_ieema.minsc=="A2"),
           ("B2","Base Rate, Scheduled DP",      result.data.pvccontractual,  result.data.ldamtcontractual, _nb2, result.data.selectedscenario=="B2", ns_ieema.minsc=="B2"),
-          ("C1","Lower Rate, Actual Date",      result.data.loweractual,     0,                            _nc1, result.data.selectedscenario=="C1", ns_ieema.minsc=="C1"),
-          ("D1","Lower Rate, Scheduled DP",     result.data.lowercontractual,0,                            _nd1, result.data.selectedscenario=="D1", ns_ieema.minsc=="D1"),
+          ("C1","Lower Rate, Actual Date",      result.data.loweractual,     c1_ld_pr,                     _nc1, result.data.selectedscenario=="C1", ns_ieema.minsc=="C1"),
+          ("D1","Lower Rate, Scheduled DP",     result.data.lowercontractual,d1_ld_pr,                     _nd1, result.data.selectedscenario=="D1", ns_ieema.minsc=="D1"),
         ] %}
         {% for row_sc,row_desc,row_gross,row_ld,row_net,row_sel,row_min in pr_rows %}
           {% if row_sc in showsc_print and (row_sc in ["A2","B2"] or row_sc in result.scenarioamounts) %}
@@ -1543,8 +1576,8 @@
               {% endif %}
             </td>
             <td class="pr-num">₹ {{ "{:,.2f}".format(row_gross | float(0)) }}</td>
-            <td class="pr-num" style="{% if _ldapply and row_sc in ['A2','B2'] and row_ld %}color:#c0392b;{% endif %}">
-              {% if _ldapply and row_sc in ["A2","B2"] and row_ld %}− ₹ {{ "{:,.2f}".format(row_ld | float(0)) }}{% else %}—{% endif %}
+            <td class="pr-num" style="{% if _ldapply and row_ld %}color:#c0392b;{% endif %}">
+              {% if _ldapply and row_ld %}− ₹ {{ "{:,.2f}".format(row_ld | float(0)) }}{% else %}—{% endif %}
             </td>
             <td class="pr-num"><b>₹ {{ "{:,.2f}".format(row_net | float(0)) }}</b></td>
             <td style="text-align:center;font-size:8.5pt;">
@@ -1592,12 +1625,21 @@
       </tr>
     </table>
 
-    <div style="margin-top:8px;font-size:8.5pt;color:#555;border:1px solid #ccc;padding:5px 8px;background:#fffbe6;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-      <b>Legend:</b>
-      &nbsp;<span style="background:#ffc107;padding:1px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Gold</span> = Selected &amp; Minimum
-      &nbsp;|&nbsp;<span style="background:#d4edda;padding:1px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Green</span> = Minimum net payable
-      &nbsp;|&nbsp; LD deducted from A2 &amp; B2 only; C1 shown as-is.
-      {% if d1_special %}&nbsp;|&nbsp; D1: special case — {% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %}, no PVC% computed.{% endif %}
+    {% set _qty_disp = (data.quantity|float(1))|int if (data.quantity|float(1)) == (data.quantity|float(1))|int else (data.quantity|float(1)) %}
+    <div style="margin-top:8px;font-size:8pt;color:#444;border:1px solid #ccc;padding:5px 8px;background:#fffbe6;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      <strong>Formula:</strong><br>
+      A2/B2: [₹{{ "{:,.2f}".format(data.basicrate|float(0)) }} (Rate) × {{ _qty_disp }} (Qty) × (1 + PVC%/100) + ₹{{ "{:,.2f}".format((data.freightrateperunit|float(0)) * (data.quantity|float(0))) }} (Total Frt)] × 1.18{% if _ldapply %} − LD{% endif %}<br>
+      {% if "C1" in showsc_print or "D1" in showsc_print %}
+      C1/D1: [₹{{ "{:,.2f}".format(data.lowerrate|float(0)) }} (Lower Rate) × {{ _qty_disp }} (Qty) × (1 + PVC%/100) + ₹{{ "{:,.2f}".format((data.lowerfreight|float(0)) * (data.quantity|float(0))) }} (Total Frt)] × 1.18{% if is_further_ext %} − LD{% else %} (no LD){% endif %}<br>
+      {% endif %}
+      {% if d1_special %}D1 (Special Case): {% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %}<br>{% endif %}
+      <div style="margin-top:4px;">
+        <b>Legend:</b>
+        &nbsp;<span style="background:#ffc107;padding:1px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Gold</span> = Selected &amp; Minimum
+        &nbsp;|&nbsp;<span style="background:#d4edda;padding:1px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">Green</span> = Minimum net payable
+        &nbsp;|&nbsp; {% if is_further_ext %}LD deducted from all applicable scenarios.{% else %}LD deducted from A2 &amp; B2 only; C1 &amp; D1 shown as-is.{% endif %}
+        {% if d1_special %}&nbsp;|&nbsp; D1: special case — {% if _ldapply %}min(B2 net after LD, plain lower basic){% else %}min(B2, plain lower basic){% endif %}, no PVC% computed.{% endif %}
+      </div>
     </div>
 
     <div class="pr-footer">
@@ -1629,6 +1671,7 @@
   .container > *:not(#printReport)     { display:none !important; }
   #printReport  { display:block !important; width:100% !important; }
   .print-page   { display:block !important; width:100% !important; box-sizing:border-box; }
+  html, body    { height:auto !important; overflow:visible !important; margin:0 !important; padding:0 !important; background:#fff !important; }
 }
 
 .print-page {
@@ -1638,8 +1681,12 @@
   width:100%;
   box-sizing:border-box;
   page-break-after:always;
+  break-after:page;
 }
-.print-page:last-child { page-break-after:avoid; }
+.print-page:last-child { page-break-after:avoid; break-after:auto; }
+
+tr { page-break-inside:avoid; break-inside:avoid; }
+.pr-sec, .pr-table, .pr-idx, .pr-formula-box, .pr-meta { page-break-inside:avoid; break-inside:avoid; }
 
 .pr-title {
   text-align:center;font-size:12pt;font-weight:bold;
@@ -1671,9 +1718,9 @@
 
 .pr-idx-twoCol { width:100%;border-collapse:collapse;font-size:10pt;margin-bottom:5px;table-layout:fixed; }
 .pr-idx-twoCol td { padding:2px 6px;border:1px solid #ccc;word-break:break-word; }
-.pr-idx-param  { font-weight:bold;width:12%; }
-.pr-idx-param0 { font-weight:bold;width:12%;border-left:2px solid #888; }
-.pr-idx-val    { text-align:right;font-family:'Courier New',monospace;width:26%; }
+.pr-idx-param  { font-weight:bold;width:16%; }
+.pr-idx-param0 { font-weight:bold;width:16%;border-left:2px solid #888; }
+.pr-idx-val    { text-align:right;font-family:'Courier New',monospace;width:34%; }
 
 .pr-formula-box { border:1px solid #ccc;background:#fafafa;padding:6px 10px;margin:3px 0 5px;font-size:10pt;line-height:1.9;-webkit-print-color-adjust:exact;print-color-adjust:exact;word-break:break-word; }
 .pr-formula-line { margin-bottom:3px; }
@@ -1707,8 +1754,9 @@ function openPrintReport() {
   ps.id = 'printOverrideStyle';
   ps.textContent =
     '@media print{' +
+    'html, body { height: auto !important; overflow: visible !important; margin: 0 !important; }' +
     'body>*:not(#printWrapper){display:none!important;}' +
-    '#printWrapper{position:static!important;overflow:visible!important;}' +
+    '#printWrapper{position:static!important;overflow:visible!important;height:auto!important;}' +
     '#printWrapper .print-page{display:block!important;width:100%!important;box-sizing:border-box!important;}' +
     '}';
   document.head.appendChild(ps);

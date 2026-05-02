@@ -2,10 +2,10 @@
 {% block title %}History - PVC{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 mt-2">
   <div>
-    <h3 class="mb-1">PVC Calculation History</h3>
-    <p class="text-muted mb-0">Saved calculations for your account</p>
+    <h4 class="mb-1 text-primary fw-bold">PVC Calculation History</h4>
+    <p class="text-muted mb-0 small">Saved calculations for your account</p>
   </div>
   <a href="{{ url_for('main.index') }}" class="btn btn-primary no-print">
     <i class="bi bi-calculator"></i> New Calculation
