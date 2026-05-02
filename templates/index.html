@@ -64,7 +64,7 @@
         <!-- Basic rate / qty / freight -->
         <div class="col-md-3">
           <label class="form-label fw-semibold">Basic Rate (per unit)</label>
-          <input class="form-control form-control-sm" type="number" step="0.01" name="basicrate" id="basicrate" value="7600000" required>
+          <input class="form-control form-control-sm" type="number" step="any" name="basicrate" id="basicrate" value="7600000" required>
         </div>
 
         <div class="col-md-3">
@@ -74,7 +74,7 @@
 
         <div class="col-md-3">
           <label class="form-label fw-semibold">Freight (per unit)</label>
-          <input class="form-control form-control-sm" type="number" step="0.01" name="freightrateperunit" id="freightrateperunit" value="0">
+          <input class="form-control form-control-sm" type="number" step="any" name="freightrateperunit" id="freightrateperunit" value="0">
         </div>
 
         <!-- Rate Applied -->
@@ -119,11 +119,11 @@
         <div class="row g-3">
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Basic Rate (per unit)</label>
-            <input class="form-control form-control-sm" type="number" step="0.01" name="lowerrate" id="lowerrate" value="8150000">
+            <input class="form-control form-control-sm" type="number" step="any" name="lowerrate" id="lowerrate" value="8150000">
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Freight (per unit)</label>
-            <input class="form-control form-control-sm" type="number" step="0.01" name="lowerfreight" id="lowerfreight" value="80000">
+            <input class="form-control form-control-sm" type="number" step="any" name="lowerfreight" id="lowerfreight" value="80000">
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Lower Base Date</label>
@@ -205,9 +205,9 @@
 <script>
 "use strict";
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // CONSTANTS
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 const lowerModes = [
   "lower rate applicable",
@@ -223,9 +223,9 @@ const rateLabels = {
   "lower rate with ld in further extension" : "Lower Rate – Further Extension With LD"
 };
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // DATE HELPERS
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 function parseDateByName(fieldName) {
   const el = document.getElementsByName(fieldName)[0];
@@ -262,9 +262,9 @@ function getLatestDPDate() {
   return latest;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // STATE HELPERS
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 function isIGBTSelected() {
   const itemSel = document.getElementById("itemid");
@@ -284,9 +284,9 @@ function isDevelopmental() {
   return chk ? chk.checked : false;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // UI TOGGLE FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 function toggleLowerRate() {
   const sec = document.getElementById("lowerratesection");
@@ -422,9 +422,9 @@ function renderExtraFields() {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // AUTO-DETECT RATE APPLIED
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 function autoDetectRateApplied() {
   const rateSel  = document.getElementById("rateapplied");
@@ -475,9 +475,9 @@ function autoDetectRateApplied() {
   toggleLowerRate();
 }
 
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // DOMContentLoaded – single event binding block
-// ═══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 document.addEventListener("DOMContentLoaded", () => {
 
